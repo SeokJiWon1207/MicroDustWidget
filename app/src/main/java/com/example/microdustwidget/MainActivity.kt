@@ -1,11 +1,16 @@
 package com.example.microdustwidget
 
-import android.Manifest
 import android.annotation.SuppressLint
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.DialogInterface
+import android.content.Intent
 import com.google.android.gms.location.FusedLocationProviderClient
 import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import com.example.microdustwidget.databinding.ActivityMainBinding
 import com.google.android.gms.location.LocationRequest
@@ -13,6 +18,10 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.tasks.CancellationTokenSource
 
 class MainActivity : AppCompatActivity() {
+
+    companion object {
+        private const val REQUEST_LOCATION_PERMISSION = 100
+    }
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
@@ -23,15 +32,14 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        if(!isInstallGooglePlayService()) installPlayService(this)
+
+
         initVariable()
         requsetLocationPermission()
 
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        cancellationTokenSource?.let { it.cancel() }
-    }
 
     // 마지막에 저장된 위치 정보
     private fun initVariable() {
@@ -62,7 +70,8 @@ class MainActivity : AppCompatActivity() {
                 LocationRequest.PRIORITY_HIGH_ACCURACY,
                 cancellationTokenSource!!.token
             ).addOnSuccessListener { location ->
-                binding.textView.text = "${location.latitude}, ${location.latitude}"
+                binding.textView.text = "${location.latitude}, ${location.longitude}"
+
             }
         }
     }
@@ -81,7 +90,50 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    companion object {
-        private const val REQUEST_LOCATION_PERMISSION = 100
+    private fun isInstallGooglePlayService(): Boolean {
+        var services = false
+
+        try {
+            packageManager.getApplicationInfo("com.google.android.gms", 0)
+            services = true
+        } catch(e: PackageManager.NameNotFoundException) {
+            services = false
+        }
+        return services
+
     }
+
+    private fun installPlayService(context: Context) {
+        AlertDialog.Builder(context)
+            .setTitle("Google Play Service")
+            .setMessage("Required Google Play Service")
+            .setCancelable(false)
+            .setPositiveButton("Install") { dialog, id ->
+                dialog.dismiss()
+                try {
+                    val intent = Intent(
+                        Intent.ACTION_VIEW,
+                        Uri.parse("https://play.google.com/store/apps/details?id=com.google.android.gms")
+                    )
+                    intent.setPackage("com.android.vending")
+                    startActivity(intent)
+                } catch (e: ActivityNotFoundException) {
+                    val intent = Intent(
+                        Intent.ACTION_VIEW,
+                        Uri.parse("https://play.google.com/store/apps/details?id=com.google.android.gms")
+                    )
+                    startActivity(intent)
+                }
+            }.setNegativeButton("Cancel") { dialog, id ->
+                dialog.cancel()
+            }.create().show()
+    }
+
+
+
+    override fun onDestroy() {
+        super.onDestroy()
+        cancellationTokenSource?.let { it.cancel() }
+    }
+
 }
