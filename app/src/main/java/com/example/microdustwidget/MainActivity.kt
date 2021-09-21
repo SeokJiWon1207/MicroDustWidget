@@ -12,10 +12,14 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
+import com.example.microdustwidget.data.Repository
 import com.example.microdustwidget.databinding.ActivityMainBinding
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.tasks.CancellationTokenSource
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -26,6 +30,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private var cancellationTokenSource: CancellationTokenSource? = null
+    private var scope = MainScope()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,17 +67,7 @@ class MainActivity : AppCompatActivity() {
             finish() // 권한 거부시 종료
         } else {
             // fetchData
-            cancellationTokenSource = CancellationTokenSource()
-
-            // LocationService는 위치 정보를 캐시하며,
-            // lastLocation.addOnSuccessListener()으로 마지막에 캐시된 위치 정보를 가져옵니다.
-            fusedLocationProviderClient.getCurrentLocation(
-                LocationRequest.PRIORITY_HIGH_ACCURACY,
-                cancellationTokenSource!!.token
-            ).addOnSuccessListener { location ->
-                binding.textView.text = "${location.latitude}, ${location.longitude}"
-
-            }
+            fetchAirData()
         }
     }
 
@@ -90,13 +85,34 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
+    @SuppressLint("MissingPermission")
+    private fun fetchAirData() {
+        cancellationTokenSource = CancellationTokenSource()
+
+        // LocationService는 위치 정보를 캐시하며,
+        // lastLocation.addOnSuccessListener()으로 마지막에 캐시된 위치 정보를 가져옵니다.
+        fusedLocationProviderClient.getCurrentLocation(
+            LocationRequest.PRIORITY_HIGH_ACCURACY,
+            cancellationTokenSource!!.token
+        ).addOnSuccessListener { location ->
+            scope.launch {
+                val monitoringstation =
+                    Repository.getNearbyMonitoringStation(location.latitude, location.longitude)
+
+                binding.textView.text = monitoringstation?.stationName
+            }
+        }
+    }
+
     private fun isInstallGooglePlayService(): Boolean {
         var services = false
 
         try {
+            // 설치가 되어 있는 경우
             packageManager.getApplicationInfo("com.google.android.gms", 0)
             services = true
         } catch(e: PackageManager.NameNotFoundException) {
+            // 설치가 되어 있지 않은 경우
             services = false
         }
         return services
@@ -129,11 +145,10 @@ class MainActivity : AppCompatActivity() {
             }.create().show()
     }
 
-
-
     override fun onDestroy() {
         super.onDestroy()
         cancellationTokenSource?.let { it.cancel() }
+        scope.cancel()
     }
 
 }
