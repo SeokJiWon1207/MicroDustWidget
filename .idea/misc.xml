@@ -3,7 +3,10 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
-        <entry key="..\:/Users/syt11/AndroidStudioProjects/MicroDustWidget/app/src/main/res/layout/activity_main.xml" value="0.1265625" />
+        <entry key="..\:/Users/syt11/AndroidStudioProjects/MicroDustWidget/app/src/main/res/drawable/ic_outline_info_24.xml" value="0.1" />
+        <entry key="..\:/Users/syt11/AndroidStudioProjects/MicroDustWidget/app/src/main/res/drawable/shape_widget_background.xml" value="0.1" />
+        <entry key="..\:/Users/syt11/AndroidStudioProjects/MicroDustWidget/app/src/main/res/layout/activity_main.xml" value="0.1" />
+        <entry key="..\:/Users/syt11/AndroidStudioProjects/MicroDustWidget/app/src/main/res/layout/view_measured_item.xml" value="0.13072916666666667" />
       </map>
     </option>
   </component>

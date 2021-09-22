@@ -10,9 +10,13 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import com.example.microdustwidget.data.Repository
+import com.example.microdustwidget.data.models.airpollution.AirPollutionValues
+import com.example.microdustwidget.data.models.airpollution.Grade
+import com.example.microdustwidget.data.models.monitoringstation.MonitoringStation
 import com.example.microdustwidget.databinding.ActivityMainBinding
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
@@ -39,7 +43,7 @@ class MainActivity : AppCompatActivity() {
 
         if(!isInstallGooglePlayService()) installPlayService(this)
 
-
+        bindView()
         initVariable()
         requsetLocationPermission()
 
@@ -49,6 +53,12 @@ class MainActivity : AppCompatActivity() {
     // 마지막에 저장된 위치 정보
     private fun initVariable() {
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+    }
+
+    private fun bindView() {
+        binding.refresh.setOnRefreshListener {
+            fetchAirData()
+        }
     }
 
 
@@ -96,10 +106,67 @@ class MainActivity : AppCompatActivity() {
             cancellationTokenSource!!.token
         ).addOnSuccessListener { location ->
             scope.launch {
-                val monitoringstation =
-                    Repository.getNearbyMonitoringStation(location.latitude, location.longitude)
+                try {
+                    val monitoringStation =
+                        Repository.getNearbyMonitoringStation(location.latitude, location.longitude)
 
-                binding.textView.text = monitoringstation?.stationName
+                    val airPollutionValue =
+                        Repository.getLatestAirPollution(monitoringStation!!.stationName!!)
+
+                    displayAirPollution(monitoringStation, airPollutionValue!!)
+                } catch (e: Exception) {
+                    binding.errorDescriptionTextView.visibility = View.VISIBLE
+                    binding.contentsLayout.alpha = 0F
+                } finally {
+                    binding.progressBar.visibility = View.GONE
+                    binding.refresh.isRefreshing = false
+                }
+            }
+        }
+    }
+
+    fun displayAirPollution(monitoringStation: MonitoringStation, airPollutionValues: AirPollutionValues) {
+        binding.contentsLayout.animate()
+            .alpha(1F)
+            .start()
+
+        binding.measuringStationNameTextView.text = monitoringStation.stationName
+        binding.measuringStationAddressTextView.text = monitoringStation.addr
+
+        (airPollutionValues.khaiGrade ?: Grade.UNKNOWN).let {
+            binding.root.setBackgroundResource(it.colorResId)
+            binding.totalGradeLabelTextView.text = it.label
+            binding.totalGradleEmojiTextView.text = it.emoji
+        }
+
+        with(airPollutionValues) {
+            binding.fineDustInformationTextView.text =
+                "미세먼지: $pm10Value ㎍/㎥ ${(pm10Grade ?: Grade.UNKNOWN).emoji}"
+            binding.ultraFineDustInformationTextView.text =
+                "초미세먼지: $pm25Value ㎍/㎥ ${(pm25Grade ?: Grade.UNKNOWN).emoji}"
+
+            with(binding.so2Item) {
+                labelTextView.text = "아황산가스"
+                gradeTextView.text = (so2Grade ?: Grade.UNKNOWN).toString()
+                valueTextView.text = "$so2Value ppm"
+            }
+
+            with(binding.coItem) {
+                labelTextView.text = "일산화탄소"
+                gradeTextView.text = (coGrade ?: Grade.UNKNOWN).toString()
+                valueTextView.text = "$coValue ppm"
+            }
+
+            with(binding.o3Item) {
+                labelTextView.text = "오존"
+                gradeTextView.text = (o3Grade ?: Grade.UNKNOWN).toString()
+                valueTextView.text = "$o3Value ppm"
+            }
+
+            with(binding.no2Item) {
+                labelTextView.text = "이산화질소"
+                gradeTextView.text = (no2Grade ?: Grade.UNKNOWN).toString()
+                valueTextView.text = "$no2Value ppm"
             }
         }
     }

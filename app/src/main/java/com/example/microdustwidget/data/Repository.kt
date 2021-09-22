@@ -3,6 +3,7 @@ package com.example.microdustwidget.data
 import com.example.microdustwidget.BuildConfig
 import com.example.microdustwidget.data.Url.AIRKOREA_API_BASE_URL
 import com.example.microdustwidget.data.Url.KAKAO_API_BASE_URL
+import com.example.microdustwidget.data.models.airpollution.AirPollutionValues
 import com.example.microdustwidget.data.models.monitoringstation.MonitoringStation
 import com.example.microdustwidget.data.service.AirKoreaApiService
 import com.example.microdustwidget.data.service.KakaoApiService
@@ -36,6 +37,14 @@ object Repository {
             }
     }
 
+    suspend fun getLatestAirPollution(stationName: String): AirPollutionValues? =
+        airKoreaApiService
+            .getRealtimeAirPollution(stationName)
+            .body()
+            ?.response
+            ?.body
+            ?.airPollutionValues
+            ?.firstOrNull()
 
     private val kakaoApiService: KakaoApiService by lazy {
         Retrofit.Builder()
