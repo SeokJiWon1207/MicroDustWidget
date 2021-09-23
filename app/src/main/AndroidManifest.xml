@@ -27,6 +27,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <receiver android:name=".widget.AirPollutionWidgetProvider">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info">
+            </meta-data>
+        </receiver>
+
+        <service android:name=".widget.AirPollutionWidgetProvider$UpdateWidgetService"
+            android:foregroundServiceType="location"/>
     </application>
 
 </manifest>

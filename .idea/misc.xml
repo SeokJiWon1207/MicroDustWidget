@@ -3,10 +3,13 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/syt11/AndroidStudioProjects/MicroDustWidget/app/src/main/res/drawable/ic_baseline_refresh_24.xml" value="0.26979166666666665" />
         <entry key="..\:/Users/syt11/AndroidStudioProjects/MicroDustWidget/app/src/main/res/drawable/ic_outline_info_24.xml" value="0.1" />
         <entry key="..\:/Users/syt11/AndroidStudioProjects/MicroDustWidget/app/src/main/res/drawable/shape_widget_background.xml" value="0.1" />
-        <entry key="..\:/Users/syt11/AndroidStudioProjects/MicroDustWidget/app/src/main/res/layout/activity_main.xml" value="0.1" />
+        <entry key="..\:/Users/syt11/AndroidStudioProjects/MicroDustWidget/app/src/main/res/layout/activity_main.xml" value="0.264" />
+        <entry key="..\:/Users/syt11/AndroidStudioProjects/MicroDustWidget/app/src/main/res/layout/layout_widget.xml" value="0.264" />
         <entry key="..\:/Users/syt11/AndroidStudioProjects/MicroDustWidget/app/src/main/res/layout/view_measured_item.xml" value="0.13072916666666667" />
+        <entry key="..\:/Users/syt11/AndroidStudioProjects/MicroDustWidget/app/src/main/res/xml/widget_info.xml" value="0.17753623188405798" />
       </map>
     </option>
   </component>

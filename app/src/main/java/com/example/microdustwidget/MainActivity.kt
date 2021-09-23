@@ -1,16 +1,18 @@
 package com.example.microdustwidget
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ActivityNotFoundException
 import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
 import com.google.android.gms.location.FusedLocationProviderClient
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import com.example.microdustwidget.data.Repository
@@ -21,14 +23,13 @@ import com.example.microdustwidget.databinding.ActivityMainBinding
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.tasks.CancellationTokenSource
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 
 class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val REQUEST_LOCATION_PERMISSION = 100
+        private const val REQUEST_BACKGROUND_ACCESS_PERMISSION = 100
     }
 
     private lateinit var binding: ActivityMainBinding
@@ -41,12 +42,11 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        if(!isInstallGooglePlayService()) installPlayService(this)
+        if (!isInstallGooglePlayService()) installPlayService(this)
 
         bindView()
         initVariable()
         requsetLocationPermission()
-
     }
 
 
@@ -71,13 +71,39 @@ class MainActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
         val locationPermissionGranted =
-            requestCode == REQUEST_LOCATION_PERMISSION && grantResults[0] == PackageManager.PERMISSION_GRANTED
+            ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    ) == PackageManager.PERMISSION_GRANTED
 
-        if (!locationPermissionGranted) {
-            finish() // 권한 거부시 종료
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (!locationPermissionGranted) {
+                finish()
+            } else {
+                val backgroundLocationPermissionGranted =
+                    ActivityCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                    ) == PackageManager.PERMISSION_GRANTED
+                val shouldShowBackgroundPermissionRationale =
+                    shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+
+                if (!backgroundLocationPermissionGranted && shouldShowBackgroundPermissionRationale) {
+                    showBackgroundLocationPermissionRationaleDialog()
+                } else {
+                    fetchAirData()
+                }
+            }
         } else {
-            // fetchData
-            fetchAirData()
+            if (!locationPermissionGranted) {
+                finish()
+            } else {
+                fetchAirData()
+            }
         }
     }
 
@@ -88,11 +114,36 @@ class MainActivity : AppCompatActivity() {
             arrayOf(
                 // ACCESS_COARSE_LOCATION : 도시 Block 단위의 정밀도의 위치 정보를 얻을 수 있습니다.
                 // ACCESS_FINE_LOCATION : ACCESS_COARSE_LOCATION보다 더 정밀한 위치 정보를 얻을 수 있습니다.
-                android.Manifest.permission.ACCESS_COARSE_LOCATION,
-                android.Manifest.permission.ACCESS_FINE_LOCATION
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.ACCESS_FINE_LOCATION
             ),
             REQUEST_LOCATION_PERMISSION
         )
+    }
+
+    private fun requestBackgroundLocationPermission() {
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(
+                android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            ),
+            REQUEST_BACKGROUND_ACCESS_PERMISSION
+        )
+    }
+
+    @RequiresApi(Build.VERSION_CODES.R)
+    private fun showBackgroundLocationPermissionRationaleDialog() {
+        AlertDialog.Builder(this)
+            .setMessage("홈 위젯을 사용하려면 위치 접근 권한이 ${packageManager.backgroundPermissionOptionLabel} 상태여야 합니다.")
+            .setPositiveButton("설정하기") { dialog, _ ->
+                requestBackgroundLocationPermission()
+                dialog.dismiss()
+            }
+            .setNegativeButton("그냥두기") { dialog, _ ->
+                fetchAirData()
+                dialog.dismiss()
+            }
+            .show()
     }
 
     @SuppressLint("MissingPermission")
@@ -125,7 +176,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun displayAirPollution(monitoringStation: MonitoringStation, airPollutionValues: AirPollutionValues) {
+    fun displayAirPollution(
+        monitoringStation: MonitoringStation,
+        airPollutionValues: AirPollutionValues
+    ) {
         binding.contentsLayout.animate()
             .alpha(1F)
             .start()
@@ -178,7 +232,7 @@ class MainActivity : AppCompatActivity() {
             // 설치가 되어 있는 경우
             packageManager.getApplicationInfo("com.google.android.gms", 0)
             services = true
-        } catch(e: PackageManager.NameNotFoundException) {
+        } catch (e: PackageManager.NameNotFoundException) {
             // 설치가 되어 있지 않은 경우
             services = false
         }
