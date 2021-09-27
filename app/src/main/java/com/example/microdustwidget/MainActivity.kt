@@ -157,6 +157,7 @@ class MainActivity : AppCompatActivity() {
             cancellationTokenSource!!.token
         ).addOnSuccessListener { location ->
             scope.launch {
+                binding.errorDescriptionTextView.visibility = View.GONE
                 try {
                     val monitoringStation =
                         Repository.getNearbyMonitoringStation(location.latitude, location.longitude)
@@ -166,6 +167,7 @@ class MainActivity : AppCompatActivity() {
 
                     displayAirPollution(monitoringStation, airPollutionValue!!)
                 } catch (e: Exception) {
+                    e.printStackTrace()
                     binding.errorDescriptionTextView.visibility = View.VISIBLE
                     binding.contentsLayout.alpha = 0F
                 } finally {
@@ -185,7 +187,7 @@ class MainActivity : AppCompatActivity() {
             .start()
 
         binding.measuringStationNameTextView.text = monitoringStation.stationName
-        binding.measuringStationAddressTextView.text = monitoringStation.addr
+        binding.measuringStationAddressTextView.text = "측정소 위치: ${monitoringStation.addr}"
 
         (airPollutionValues.khaiGrade ?: Grade.UNKNOWN).let {
             binding.root.setBackgroundResource(it.colorResId)

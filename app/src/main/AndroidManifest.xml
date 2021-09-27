@@ -19,14 +19,14 @@
         android:theme="@style/Theme.MicroDustWidget">
         <activity
             android:name=".MainActivity"
-            android:screenOrientation="portrait"
-            android:exported="true">
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <receiver android:name=".widget.AirPollutionWidgetProvider">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>

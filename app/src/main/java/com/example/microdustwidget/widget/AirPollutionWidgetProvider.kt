@@ -26,7 +26,7 @@ class AirPollutionWidgetProvider: AppWidgetProvider() {
 
     companion object {
         private const val WIDGET_REFRESH_CHANNEL_ID = "WIDGET_REFRESH_CHANNEL_ID"
-        private const val NOTIFICATION_ID = 101
+        private const val NOTIFICATION_ID = 12345
     }
 
     override fun onUpdate(
